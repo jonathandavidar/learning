@@ -1,18 +1,21 @@
-# Mergington High School Activities API
+# Mini Learning Engine API
 
-A super simple FastAPI application that allows students to view and sign up for extracurricular activities.
+A lightweight FastAPI application that turns provided source material into a
+5-7 minute, application-oriented mini course.
 
 ## Features
 
-- View all available extracurricular activities
-- Sign up for activities
+- Analyze the full source text and break it into logical modules
+- Generate Bloom's Taxonomy level 3-6 learning objectives for each module
+- Create small assessments mapped to each learning objective
+- Export the generated course as a SCORM 1.2 compatible zip package
 
 ## Getting Started
 
 1. Install the dependencies:
 
    ```
-   pip install fastapi uvicorn
+   pip install -r ../requirements.txt
    ```
 
 2. Run the application:
@@ -22,29 +25,13 @@ A super simple FastAPI application that allows students to view and sign up for 
    ```
 
 3. Open your browser and go to:
-   - API documentation: http://localhost:8000/docs
-   - Alternative documentation: http://localhost:8000/redoc
+
+   - App UI: http://localhost:8000/static/index.html
+   - API docs: http://localhost:8000/docs
 
 ## API Endpoints
 
-| Method | Endpoint                                                          | Description                                                         |
-| ------ | ----------------------------------------------------------------- | ------------------------------------------------------------------- |
-| GET    | `/activities`                                                     | Get all activities with their details and current participant count |
-| POST   | `/activities/{activity_name}/signup?email=student@mergington.edu` | Sign up for an activity                                             |
-
-## Data Model
-
-The application uses a simple data model with meaningful identifiers:
-
-1. **Activities** - Uses activity name as identifier:
-
-   - Description
-   - Schedule
-   - Maximum number of participants allowed
-   - List of student emails who are signed up
-
-2. **Students** - Uses email as identifier:
-   - Name
-   - Grade level
-
-All data is stored in memory, which means data will be reset when the server restarts.
+| Method | Endpoint             | Description                                   |
+| ------ | -------------------- | --------------------------------------------- |
+| POST   | `/api/course`        | Generate the structured mini-course JSON      |
+| POST   | `/api/course/scorm`  | Download the SCORM 1.2 package as a zip file  |

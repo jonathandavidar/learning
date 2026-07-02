@@ -3,47 +3,61 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mergington High School Activities</title>
+    <title>Mini Learning Engine</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header>
-      <h1>Mergington High School</h1>
-      <h2>Extracurricular Activities</h2>
+      <h1>Mini Learning Engine</h1>
+      <p>
+        Paste source material to generate a 5-7 minute Bloom-aligned mini course
+        and download a SCORM package.
+      </p>
     </header>
 
     <main>
-      <section id="activities-container">
-        <h3>Available Activities</h3>
-        <div id="activities-list">
-          <!-- Activities will be loaded here -->
-          <p>Loading activities...</p>
-        </div>
-      </section>
-
-      <section id="signup-container">
-        <h3>Sign Up for an Activity</h3>
-        <form id="signup-form">
+      <section>
+        <h2>Course Input</h2>
+        <form id="course-form">
           <div class="form-group">
-            <label for="email">Student Email:</label>
-            <input type="email" id="email" required placeholder="your-email@mergington.edu" />
+            <label for="topic">Topic (optional)</label>
+            <input id="topic" type="text" placeholder="e.g. Cybersecurity Awareness" />
           </div>
           <div class="form-group">
-            <label for="activity">Select Activity:</label>
-            <select id="activity" required>
-              <option value="">-- Select an activity --</option>
-              <!-- Activity options will be loaded here -->
+            <label for="bloom-level">Bloom level</label>
+            <select id="bloom-level" required>
+              <option value="3">3 - Apply</option>
+              <option value="4">4 - Analyze</option>
+              <option value="5">5 - Evaluate</option>
+              <option value="6">6 - Create</option>
             </select>
           </div>
-          <button type="submit">Sign Up</button>
+          <div class="form-group">
+            <label for="source-text">Source material</label>
+            <textarea
+              id="source-text"
+              required
+              rows="16"
+              placeholder="Paste the source content here..."
+            ></textarea>
+          </div>
+          <div class="button-row">
+            <button type="submit">Generate Mini Course</button>
+            <button type="button" id="download-scorm" class="secondary" disabled>
+              Download SCORM Package
+            </button>
+          </div>
         </form>
         <div id="message" class="hidden"></div>
       </section>
-    </main>
 
-    <footer>
-      <p>&copy; 2023 Mergington High School</p>
-    </footer>
+      <section>
+        <h2>Generated Course</h2>
+        <div id="course-output">
+          <p>Your generated course will appear here.</p>
+        </div>
+      </section>
+    </main>
 
     <script src="app.js"></script>
   </body>

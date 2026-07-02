@@ -1,86 +1,123 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const activitiesList = document.getElementById("activities-list");
-  const activitySelect = document.getElementById("activity");
-  const signupForm = document.getElementById("signup-form");
+  const form = document.getElementById("course-form");
+  const downloadButton = document.getElementById("download-scorm");
+  const output = document.getElementById("course-output");
   const messageDiv = document.getElementById("message");
 
-  // Function to fetch activities from API
-  async function fetchActivities() {
-    try {
-      const response = await fetch("/activities");
-      const activities = await response.json();
+  let lastPayload = null;
 
-      // Clear loading message
-      activitiesList.innerHTML = "";
-
-      // Populate activities list
-      Object.entries(activities).forEach(([name, details]) => {
-        const activityCard = document.createElement("div");
-        activityCard.className = "activity-card";
-
-        const spotsLeft = details.max_participants - details.participants.length;
-
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-        `;
-
-        activitiesList.appendChild(activityCard);
-
-        // Add option to select dropdown
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        activitySelect.appendChild(option);
-      });
-    } catch (error) {
-      activitiesList.innerHTML = "<p>Failed to load activities. Please try again later.</p>";
-      console.error("Error fetching activities:", error);
-    }
+  function setMessage(text, type) {
+    messageDiv.textContent = text;
+    messageDiv.className = type;
   }
 
-  // Handle form submission
-  signupForm.addEventListener("submit", async (event) => {
+  function buildPayload() {
+    return {
+      topic: document.getElementById("topic").value.trim() || null,
+      bloom_level: Number(document.getElementById("bloom-level").value),
+      source_text: document.getElementById("source-text").value.trim(),
+    };
+  }
+
+  function renderCourse(course) {
+    const modules = course.modules
+      .map(
+        (module) => `
+          <article class="course-card">
+            <h3>${module.title}</h3>
+            <p>${module.summary}</p>
+            <p><strong>Source excerpt:</strong> ${module.source_excerpt}</p>
+            <p><strong>Public knowledge bridge:</strong> ${module.public_knowledge_bridge}</p>
+            <h4>Learning objectives</h4>
+            <ul>
+              ${module.learning_objectives.map((objective) => `<li>${objective}</li>`).join("")}
+            </ul>
+            <h4>Assessments</h4>
+            <ol>
+              ${module.assessments
+                .map(
+                  (assessment) => `
+                    <li>
+                      <strong>${assessment.type}:</strong> ${assessment.prompt}
+                    </li>
+                  `
+                )
+                .join("")}
+            </ol>
+          </article>
+        `
+      )
+      .join("");
+
+    output.innerHTML = `
+      <article class="course-card">
+        <h3>${course.title}</h3>
+        <p><strong>Bloom level:</strong> ${course.bloom_level} - ${course.bloom_label}</p>
+        <p><strong>Estimated duration:</strong> ${course.estimated_duration_minutes} minutes</p>
+        <p><strong>SCORM package:</strong> ${course.scorm.file_name}</p>
+      </article>
+      ${modules}
+    `;
+  }
+
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const email = document.getElementById("email").value;
-    const activity = document.getElementById("activity").value;
-
+    const payload = buildPayload();
     try {
-      const response = await fetch(
-        `/activities/${encodeURIComponent(activity)}/signup?email=${encodeURIComponent(email)}`,
-        {
-          method: "POST",
-        }
-      );
-
+      const response = await fetch("/api/course", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
       const result = await response.json();
 
-      if (response.ok) {
-        messageDiv.textContent = result.message;
-        messageDiv.className = "success";
-        signupForm.reset();
-      } else {
-        messageDiv.textContent = result.detail || "An error occurred";
-        messageDiv.className = "error";
+      if (!response.ok) {
+        throw new Error(result.detail || "Failed to generate course");
       }
 
-      messageDiv.classList.remove("hidden");
-
-      // Hide message after 5 seconds
-      setTimeout(() => {
-        messageDiv.classList.add("hidden");
-      }, 5000);
+      lastPayload = payload;
+      downloadButton.disabled = false;
+      renderCourse(result);
+      setMessage("Mini course generated successfully.", "success");
     } catch (error) {
-      messageDiv.textContent = "Failed to sign up. Please try again.";
-      messageDiv.className = "error";
-      messageDiv.classList.remove("hidden");
-      console.error("Error signing up:", error);
+      downloadButton.disabled = true;
+      setMessage(error.message || "Unable to generate the course.", "error");
     }
   });
 
-  // Initialize app
-  fetchActivities();
+  downloadButton.addEventListener("click", async () => {
+    if (!lastPayload) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/course/scorm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(lastPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Unable to build SCORM package");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const contentDisposition = response.headers.get("Content-Disposition") || "";
+      const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+      link.href = url;
+      link.download = fileNameMatch ? fileNameMatch[1] : "mini-course.zip";
+      link.click();
+      URL.revokeObjectURL(url);
+      setMessage("SCORM package downloaded.", "success");
+    } catch (error) {
+      setMessage(error.message || "Unable to download the SCORM package.", "error");
+    }
+  });
 });
