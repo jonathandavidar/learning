@@ -467,6 +467,7 @@ def build_scorm_launch_page(course: dict[str, Any]) -> str:
         max-width: 960px;
         padding: 24px;
         color: #1f2933;
+        background: #f5f7fa;
       }}
       header, .module {{
         border: 1px solid #d9e2ec;
@@ -474,9 +475,6 @@ def build_scorm_launch_page(course: dict[str, Any]) -> str:
         padding: 20px;
         margin-bottom: 20px;
         background: #fff;
-      }}
-      body {{
-        background: #f5f7fa;
       }}
       h1, h2, h3 {{
         color: #102a43;
